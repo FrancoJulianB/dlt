@@ -15,7 +15,7 @@ WITH raw_data AS (
     redeems,
     TIMESTAMP_MILLIS(CAST(updatedAt AS INT64)) AS updatedAt,
     userList
-  FROM `your_project.your_dataset.referral_codes`
+  FROM `gamer-wallet-gateway.referralcodes` 
 ),
 
 -- Expand the redeems array
