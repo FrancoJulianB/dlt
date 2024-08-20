@@ -8,14 +8,15 @@ WITH raw_data AS (
     currency,
     CAST(amount AS INT64) AS amount,
     CAST(stock AS INT64) AS stock,
-    TIMESTAMP_MILLIS(CAST(validityFrom AS INT64)) AS validityFrom,
-    TIMESTAMP_MILLIS(CAST(validityTo AS INT64)) AS validityTo,
+    TIMESTAMP(validityFrom) AS validityFrom,
+    TIMESTAMP(validityTo) AS validityTo,
     status,
     referralUser,
-    redeems,
-    TIMESTAMP_MILLIS(CAST(updatedAt AS INT64)) AS updatedAt,
+    -- Keep redeems as STRING
+    redeems AS redeems_string,
+    TIMESTAMP(updatedAt) AS updatedAt,
     userList
-  FROM `gamer-wallet-gateway.referralcodes` 
+  FROM `n1u_dataset.referralcodes`
 ),
 
 -- Expand the redeems array
@@ -33,10 +34,13 @@ redeem_expanded AS (
     validityTo,
     status,
     referralUser,
-    redeem.user AS redeem_user,
-    TIMESTAMP_MILLIS(CAST(redeem.date AS INT64)) AS redeem_date
+    -- Extract individual redeem records
+    JSON_EXTRACT_SCALAR(redeem, '$.user') AS redeem_user,
+    TIMESTAMP(JSON_EXTRACT_SCALAR(redeem, '$.date')) AS redeem_date,
+    updatedAt,
+    userList  -- Ensure `userList` is included here
   FROM raw_data
-  CROSS JOIN UNNEST(redeems) AS redeem
+  CROSS JOIN UNNEST(JSON_EXTRACT_ARRAY(redeems_string, '$')) AS redeem
 )
 
 -- Final output
